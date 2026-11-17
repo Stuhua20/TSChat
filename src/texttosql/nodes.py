@@ -13,6 +13,7 @@ import json
 import logging
 import re
 import shutil
+from contextvars import ContextVar
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -29,6 +30,10 @@ from .state import GraphState
 
 logger = logging.getLogger(__name__)
 
+# Evaluation can bind its own read-only SQLite tools to the current async task.
+# Ordinary chat requests continue to use the configured MCP server.
+evaluation_tools: ContextVar[Any] = ContextVar("evaluation_tools", default=None)
+
 
 # ---------------------------------------------------------------------------
 # mcp2cli 辅助函数
@@ -42,6 +47,9 @@ async def _mcp2cli_async(tool_name: str, args: dict[str, str] | None = None) -> 
 
     如果 mcp2cli 未安装或调用失败，抛出 RuntimeError。
     """
+    local_tools = evaluation_tools.get()
+    if local_tools is not None:
+        return await local_tools(tool_name, args or {})
     if shutil.which("mcp2cli") is None:
         raise RuntimeError(
             "mcp2cli not found. Install it with: pip install mcp2cli"

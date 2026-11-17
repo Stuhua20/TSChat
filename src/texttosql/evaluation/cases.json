@@ -1,27 +1,177 @@
 {
   "name": "ELN 示例数据库评测集",
-  "version": "1.0",
-  "database": "SQLite 示例数据库（eln_writeup_anonymized）",
+  "version": "2.0",
+  "database": "固定 ELN 示例数据及边界数据副本",
   "cases": [
-    {"id":"count_01","category":"基础统计","question":"数据库中一共有多少条实验记录？按记录行数统计。","reference_sql":"SELECT COUNT(*) FROM eln_writeup_anonymized"},
-    {"id":"count_02","category":"基础统计","question":"数据库中有多少个不同的实验编号 exp_id？","reference_sql":"SELECT COUNT(DISTINCT exp_id) FROM eln_writeup_anonymized"},
-    {"id":"count_03","category":"基础统计","question":"数据库中有多少种不同的 system_name？","reference_sql":"SELECT COUNT(DISTINCT system_name) FROM eln_writeup_anonymized"},
-    {"id":"count_04","category":"基础统计","question":"有多少条记录的 write_up 不为空？","reference_sql":"SELECT COUNT(*) FROM eln_writeup_anonymized WHERE write_up IS NOT NULL"},
-    {"id":"filter_01","category":"条件筛选","question":"有多少条记录的 system_name 恰好等于 AetherGen？","reference_sql":"SELECT COUNT(*) FROM eln_writeup_anonymized WHERE system_name = 'AetherGen'"},
-    {"id":"filter_02","category":"条件筛选","question":"有多少条记录的 system_name 包含 masks？","reference_sql":"SELECT COUNT(*) FROM eln_writeup_anonymized WHERE system_name LIKE '%masks%'"},
-    {"id":"filter_03","category":"条件筛选","question":"有多少条记录的实验编号 exp_id 是 145962？","reference_sql":"SELECT COUNT(*) FROM eln_writeup_anonymized WHERE exp_id = '145962'"},
-    {"id":"filter_04","category":"条件筛选","question":"有多少条记录的 analysis_date 是 2025-01-30？","reference_sql":"SELECT COUNT(*) FROM eln_writeup_anonymized WHERE analysis_date = '2025-01-30'"},
-    {"id":"group_01","category":"分组统计","question":"各 analysis_date 分别有多少条实验记录？返回日期和记录数。","reference_sql":"SELECT analysis_date, COUNT(*) FROM eln_writeup_anonymized GROUP BY analysis_date"},
-    {"id":"group_02","category":"分组统计","question":"各 system_name 分别有多少条实验记录？返回系统名和记录数。","reference_sql":"SELECT system_name, COUNT(*) FROM eln_writeup_anonymized GROUP BY system_name"},
-    {"id":"group_03","category":"分组统计","question":"各实验编号 exp_id 分别有多少条记录？只返回记录数超过 2 的编号和对应记录数。","reference_sql":"SELECT exp_id, COUNT(*) FROM eln_writeup_anonymized GROUP BY exp_id HAVING COUNT(*) > 2"},
-    {"id":"group_04","category":"分组统计","question":"各实验分析日期分别有多少个不同的实验编号 exp_id？返回日期和去重数量。","reference_sql":"SELECT analysis_date, COUNT(DISTINCT exp_id) FROM eln_writeup_anonymized GROUP BY analysis_date"},
-    {"id":"date_01","category":"日期处理","question":"最早的 analysis_date 是哪一天？","reference_sql":"SELECT MIN(analysis_date) FROM eln_writeup_anonymized"},
-    {"id":"date_02","category":"日期处理","question":"最晚的 analysis_date 是哪一天？","reference_sql":"SELECT MAX(analysis_date) FROM eln_writeup_anonymized"},
-    {"id":"date_03","category":"日期处理","question":"analysis_date 在 2025 年 2 月的记录共有多少条？","reference_sql":"SELECT COUNT(*) FROM eln_writeup_anonymized WHERE analysis_date >= '2025-02-01' AND analysis_date < '2025-03-01'"},
-    {"id":"date_04","category":"日期处理","question":"按 analysis_date 的年份统计记录数，返回年份和记录数。","reference_sql":"SELECT substr(analysis_date, 1, 4), COUNT(*) FROM eln_writeup_anonymized GROUP BY substr(analysis_date, 1, 4)"},
-    {"id":"json_01","category":"JSON 字段","question":"summary_data 中 STATUS 等于字符串 0 的记录有多少条？按记录行数统计。","reference_sql":"SELECT COUNT(*) FROM eln_writeup_anonymized WHERE json_extract(summary_data, '$.STATUS') = '0'"},
-    {"id":"json_02","category":"JSON 字段","question":"summary_data 中 PDF_COMPLETE 等于 Y 的记录有多少条？","reference_sql":"SELECT COUNT(*) FROM eln_writeup_anonymized WHERE json_extract(summary_data, '$.PDF_COMPLETE') = 'Y'"},
-    {"id":"json_03","category":"JSON 字段","question":"按 summary_data 中的 PROTOCOL 分组，分别有多少条记录？返回协议和记录数。","reference_sql":"SELECT json_extract(summary_data, '$.PROTOCOL'), COUNT(*) FROM eln_writeup_anonymized GROUP BY json_extract(summary_data, '$.PROTOCOL')"},
-    {"id":"json_04","category":"JSON 字段","question":"summary_data 中有多少个不同的 ISID？忽略空值。","reference_sql":"SELECT COUNT(DISTINCT json_extract(summary_data, '$.ISID')) FROM eln_writeup_anonymized"}
+    {
+      "id": "count_01",
+      "category": "基础统计",
+      "question": "数据库中一共有多少条实验记录？按记录行数统计。",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized"
+    },
+    {
+      "id": "count_02",
+      "category": "基础统计",
+      "question": "数据库中有多少个不同的实验编号 exp_id？",
+      "reference_sql": "SELECT COUNT(DISTINCT exp_id) FROM eln_writeup_anonymized"
+    },
+    {
+      "id": "count_03",
+      "category": "基础统计",
+      "question": "数据库中有多少种不同的 system_name？",
+      "reference_sql": "SELECT COUNT(DISTINCT system_name) FROM eln_writeup_anonymized"
+    },
+    {
+      "id": "count_04",
+      "category": "基础统计",
+      "question": "有多少条记录的 write_up 不为空？",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized WHERE write_up IS NOT NULL"
+    },
+    {
+      "id": "filter_01",
+      "category": "条件筛选",
+      "question": "有多少条记录的 system_name 恰好等于 AetherGen？",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized WHERE system_name = 'AetherGen'"
+    },
+    {
+      "id": "filter_02",
+      "category": "条件筛选",
+      "question": "有多少条记录的 system_name 包含 masks？",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized WHERE system_name LIKE '%masks%'"
+    },
+    {
+      "id": "filter_03",
+      "category": "条件筛选",
+      "question": "有多少条记录的实验编号 exp_id 是 145962？",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized WHERE exp_id = '145962'"
+    },
+    {
+      "id": "filter_04",
+      "category": "条件筛选",
+      "question": "有多少条记录的 analysis_date 是 2025-01-30？",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized WHERE analysis_date = '2025-01-30'"
+    },
+    {
+      "id": "group_01",
+      "category": "分组统计",
+      "question": "各 analysis_date 分别有多少条实验记录？返回日期和记录数。",
+      "reference_sql": "SELECT analysis_date, COUNT(*) FROM eln_writeup_anonymized GROUP BY analysis_date"
+    },
+    {
+      "id": "group_02",
+      "category": "分组统计",
+      "question": "各 system_name 分别有多少条实验记录？返回系统名和记录数。",
+      "reference_sql": "SELECT system_name, COUNT(*) FROM eln_writeup_anonymized GROUP BY system_name"
+    },
+    {
+      "id": "group_03",
+      "category": "分组统计",
+      "question": "各实验编号 exp_id 分别有多少条记录？只返回记录数超过 2 的编号和对应记录数。",
+      "reference_sql": "SELECT exp_id, COUNT(*) FROM eln_writeup_anonymized GROUP BY exp_id HAVING COUNT(*) > 2"
+    },
+    {
+      "id": "group_04",
+      "category": "分组统计",
+      "question": "各实验分析日期分别有多少个不同的实验编号 exp_id？返回日期和去重数量。",
+      "reference_sql": "SELECT analysis_date, COUNT(DISTINCT exp_id) FROM eln_writeup_anonymized GROUP BY analysis_date"
+    },
+    {
+      "id": "date_01",
+      "category": "日期处理",
+      "question": "最早的 analysis_date 是哪一天？",
+      "reference_sql": "SELECT MIN(analysis_date) FROM eln_writeup_anonymized"
+    },
+    {
+      "id": "date_02",
+      "category": "日期处理",
+      "question": "最晚的 analysis_date 是哪一天？",
+      "reference_sql": "SELECT MAX(analysis_date) FROM eln_writeup_anonymized"
+    },
+    {
+      "id": "date_03",
+      "category": "日期处理",
+      "question": "analysis_date 在 2025 年 2 月的记录共有多少条？",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized WHERE analysis_date >= '2025-02-01' AND analysis_date < '2025-03-01'"
+    },
+    {
+      "id": "date_04",
+      "category": "日期处理",
+      "question": "按 analysis_date 的年份统计记录数，返回年份和记录数。",
+      "reference_sql": "SELECT substr(analysis_date, 1, 4), COUNT(*) FROM eln_writeup_anonymized GROUP BY substr(analysis_date, 1, 4)"
+    },
+    {
+      "id": "json_01",
+      "category": "JSON 字段",
+      "question": "summary_data 中 STATUS 等于字符串 0 的记录有多少条？按记录行数统计。",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized WHERE json_extract(summary_data, '$.STATUS') = '0'"
+    },
+    {
+      "id": "json_02",
+      "category": "JSON 字段",
+      "question": "summary_data 中 PDF_COMPLETE 等于 Y 的记录有多少条？",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized WHERE json_extract(summary_data, '$.PDF_COMPLETE') = 'Y'"
+    },
+    {
+      "id": "json_03",
+      "category": "JSON 字段",
+      "question": "按 summary_data 中的 PROTOCOL 分组，分别有多少条记录？返回协议和记录数。",
+      "reference_sql": "SELECT json_extract(summary_data, '$.PROTOCOL'), COUNT(*) FROM eln_writeup_anonymized GROUP BY json_extract(summary_data, '$.PROTOCOL')"
+    },
+    {
+      "id": "json_04",
+      "category": "JSON 字段",
+      "question": "summary_data 中有多少个不同的 ISID？忽略空值。",
+      "reference_sql": "SELECT COUNT(DISTINCT json_extract(summary_data, '$.ISID')) FROM eln_writeup_anonymized"
+    },
+    {
+      "id": "null_01",
+      "category": "空值与重复",
+      "question": "有多少条记录的 write_up 为 NULL？",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized WHERE write_up IS NULL"
+    },
+    {
+      "id": "null_02",
+      "category": "空值与重复",
+      "question": "有多少条记录的 system_name 不为 NULL？",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized WHERE system_name IS NOT NULL"
+    },
+    {
+      "id": "null_03",
+      "category": "空值与重复",
+      "question": "实验编号 exp_id 非空的记录有多少条？按记录行数统计，不去重。",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized WHERE exp_id IS NOT NULL"
+    },
+    {
+      "id": "range_01",
+      "category": "边界条件",
+      "question": "analysis_date 在 2025 年 2 月 1 日至 2 月 28 日之间（包含这两天）的记录有多少条？",
+      "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized WHERE analysis_date >= '2025-02-01' AND analysis_date <= '2025-02-28'"
+    },
+    {
+      "id": "range_02",
+      "category": "边界条件",
+      "question": "记录数恰好为 2 的不同实验编号有多少个？忽略空编号。",
+      "reference_sql": "SELECT COUNT(*) FROM (SELECT exp_id FROM eln_writeup_anonymized WHERE exp_id IS NOT NULL GROUP BY exp_id HAVING COUNT(*) = 2)"
+    },
+    {
+      "id": "range_03",
+      "category": "边界条件",
+      "question": "记录数超过 2 的不同实验编号有多少个？忽略空编号。",
+      "reference_sql": "SELECT COUNT(*) FROM (SELECT exp_id FROM eln_writeup_anonymized WHERE exp_id IS NOT NULL GROUP BY exp_id HAVING COUNT(*) > 2)"
+    },
+    {
+      "id": "sort_01",
+      "category": "排序与限制",
+      "question": "按记录数从高到低列出记录最多的 3 个非空 system_name 及其记录数；数量相同时按 system_name 升序排列。",
+      "reference_sql": "SELECT system_name, COUNT(*) AS n FROM eln_writeup_anonymized WHERE system_name IS NOT NULL GROUP BY system_name ORDER BY n DESC, system_name ASC LIMIT 3",
+      "ordered": true
+    },
+    {
+      "id": "sort_02",
+      "category": "排序与限制",
+      "question": "按日期从新到旧列出最近 3 个不同的非空 analysis_date。",
+      "reference_sql": "SELECT DISTINCT analysis_date FROM eln_writeup_anonymized WHERE analysis_date IS NOT NULL ORDER BY analysis_date DESC LIMIT 3",
+      "ordered": true
+    }
   ]
 }

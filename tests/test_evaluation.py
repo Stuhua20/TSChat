@@ -8,6 +8,7 @@ import pytest
 from fastapi import FastAPI
 
 from texttosql.evaluation.compare import compare_results
+from texttosql.evaluation.fixture import FixtureTools, create_fixtures
 from texttosql.seed_sqlite import seed_database
 from texttosql.web import evaluation
 
@@ -42,7 +43,7 @@ def test_reference_queries_run_read_only_on_seed_database(tmp_path):
     conn = sqlite3.connect(f"{path.as_uri()}?mode=ro", uri=True)
     try:
         suite = evaluation._cases()
-        assert len(suite["cases"]) == 20
+        assert len(suite["cases"]) == 28
         for case in suite["cases"]:
             rows = conn.execute(case["reference_sql"]).fetchall()
             assert len(rows) <= 200, case["id"]
@@ -58,7 +59,6 @@ async def client(tmp_path, monkeypatch):
     biz_path = tmp_path / "business.db"
     sqlite3.connect(biz_path).close()
     monkeypatch.setattr(evaluation, "APP_DB_URI", f"sqlite:///{app_path}")
-    monkeypatch.setattr(evaluation, "DB_URI", f"sqlite:///{biz_path}")
     monkeypatch.setattr(evaluation, "DB_DIALECT", "sqlite")
     monkeypatch.setattr(evaluation, "app_sqlite_path", lambda: app_path)
     monkeypatch.setattr(evaluation, "_init_done", False)
@@ -120,6 +120,7 @@ async def test_run_report_history_and_user_isolation(client):
     assert report["completed"] == 1
     assert report["results"][0]["status"] == "correct"
     assert report["results"][0]["attempts"][0]["sql"] == "SELECT 2"
+    assert report["metadata"]["fixture_version"]
     app.dependency_overrides[evaluation.get_current_user] = lambda: {"username": "bob"}
     assert (
         await http.post("/evaluation/api", json={"action": "report", "run_id": run_id})
@@ -234,3 +235,64 @@ async def test_stop_immediately_after_start(client, monkeypatch):
     ).json()
     assert report["status"] == "stopped"
     assert run_id not in evaluation._jobs
+
+
+@pytest.mark.asyncio
+async def test_fixed_fixtures_references_and_boundary_detection(tmp_path):
+    baseline, boundary = create_fixtures(tmp_path)
+    tools = [FixtureTools(baseline), FixtureTools(boundary)]
+    for case in evaluation._cases()["cases"]:
+        for fixture in tools:
+            outcome = await fixture("execute_sql", {"sql_query": case["reference_sql"]})
+            assert outcome["status"] == "success", (case["id"], outcome)
+            assert len(outcome["rows"]) <= 200, case["id"]
+
+    reference = "SELECT COUNT(*) FROM (SELECT exp_id FROM eln_writeup_anonymized WHERE exp_id LIKE 'eval-boundary-%' GROUP BY exp_id HAVING COUNT(*) > 2)"
+    incorrect = reference.replace("COUNT(*) > 2", "COUNT(*) >= 2")
+    for fixture, expected_status in zip(tools, ("correct", "incorrect")):
+        expected = await fixture("execute_sql", {"sql_query": reference})
+        actual = await fixture("execute_sql", {"sql_query": incorrect})
+        assert compare_results(expected, actual)[0] == expected_status
+    denied = await tools[0](
+        "execute_sql", {"sql_query": "DELETE FROM eln_writeup_anonymized"}
+    )
+    assert denied["status"] == "error"
+
+
+@pytest.mark.asyncio
+async def test_evaluation_uses_fixture_for_pipeline_and_records_first_attempt(
+    tmp_path, monkeypatch
+):
+    from texttosql import nodes
+
+    class FakeModel:
+        def __init__(self):
+            self.calls = 0
+
+        async def ainvoke(self, messages):
+            self.calls += 1
+            sql = (
+                "SELECT missing FROM eln_writeup_anonymized"
+                if self.calls == 1
+                else "SELECT COUNT(*) FROM eln_writeup_anonymized"
+            )
+            return SimpleNamespace(content=sql, response_metadata={})
+
+    monkeypatch.setattr(nodes, "get_llm", lambda: model)
+    model = FakeModel()
+    baseline, boundary = create_fixtures(tmp_path)
+    case = {
+        "id": "count",
+        "category": "count",
+        "question": "Count records",
+        "reference_sql": "SELECT COUNT(*) FROM eln_writeup_anonymized",
+    }
+    result = await evaluation._evaluate(
+        case, FixtureTools(baseline), FixtureTools(boundary)
+    )
+    assert result["status"] == "correct"
+    assert result["first_status"] == "query_failed"
+    assert result["boundary_status"] == "correct"
+    assert result["corrections"] == 1
+    assert result["expected"]["rows"] == [[218]]
+    assert nodes.evaluation_tools.get() is None
